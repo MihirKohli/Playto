@@ -105,7 +105,7 @@ DATABASES = {
         "NAME": "payout",
         "USER": "postgres",
         "PASSWORD": "postgres",
-        "HOST": "db",  # 👈 important
+        "HOST": "db",
         "PORT": "5432",
     }
 }
@@ -168,6 +168,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = True   # lock down in prod
+
+from corsheaders.defaults import default_headers
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'x-merchant-id',
+    'idempotency-key',
+]
 
 # ── REST FRAMEWORK ────────────────────────────────────────────────────────────
 REST_FRAMEWORK = {

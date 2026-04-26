@@ -1,22 +1,40 @@
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE = "http://localhost:8000/api/v1";
 
-export async function getDashboard() {
-  const res = await fetch(`${BASE_URL}/dashboard`);
+export async function getMerchants() {
+  const res = await fetch(`${BASE}/merchants/`);
+  if (!res.ok) throw new Error("Failed to fetch merchants");
   return res.json();
 }
 
-export async function createPayout(amount_paise) {
-  const res = await fetch(`${BASE_URL}/payouts`, {
+export async function getBalance(merchantId) {
+  const res = await fetch(`${BASE}/merchants/${merchantId}/balance/`);
+  if (!res.ok) throw new Error("Failed to fetch balance");
+  return res.json();
+}
+
+export async function getLedger(merchantId) {
+  const res = await fetch(`${BASE}/merchants/${merchantId}/ledger/`);
+  if (!res.ok) throw new Error("Failed to fetch ledger");
+  return res.json();
+}
+
+export async function getPayouts(merchantId) {
+  const res = await fetch(`${BASE}/merchants/${merchantId}/payouts/`);
+  if (!res.ok) throw new Error("Failed to fetch payouts");
+  return res.json();
+}
+
+export async function createPayout(merchantId, bankAccountId, amountPaise) {
+  const res = await fetch(`${BASE}/payouts/`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "X-Merchant-Id": merchantId,
       "Idempotency-Key": crypto.randomUUID(),
     },
-    body: JSON.stringify({
-      amount_paise,
-      bank_account_id: 1,
-    }),
+    body: JSON.stringify({ amount_paise: amountPaise, bank_account_id: bankAccountId }),
   });
-
-  return res.json();
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Payout failed");
+  return data;
 }
