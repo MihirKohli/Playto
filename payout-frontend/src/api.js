@@ -1,4 +1,4 @@
-const BASE = "http://localhost:8000/api/v1";
+const BASE = process.env.REACT_APP_API_URL || "http://localhost:8000/api/v1";
 
 export async function getMerchants() {
   const res = await fetch(`${BASE}/merchants/`);
