@@ -24,6 +24,16 @@ export async function getPayouts(merchantId) {
   return res.json();
 }
 
+export async function getLogs({ level = '', logger = '', limit = 100 } = {}) {
+  const params = new URLSearchParams();
+  if (level)  params.set('level', level);
+  if (logger) params.set('logger', logger);
+  params.set('limit', limit);
+  const res = await fetch(`${BASE}/logs/?${params}`);
+  if (!res.ok) throw new Error("Failed to fetch logs");
+  return res.json();
+}
+
 export async function createPayout(merchantId, bankAccountId, amountPaise) {
   const res = await fetch(`${BASE}/payouts/`, {
     method: "POST",

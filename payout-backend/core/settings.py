@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     # our apps
     'merchants',
     'payouts',
+    'logs',
 ]
 
 MIDDLEWARE = [
@@ -85,40 +86,45 @@ TEMPLATES = [
 WSGI_APPLICATION = 'core.wsgi.application'
 
 # DATABASES section of your settings.py with this
-tmpPostgres = urlparse(os.getenv("DATABASE_URL"))
+DATABASE_URL = os.getenv("DATABASE_URL")
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': tmpPostgres.path.replace('/', ''),
-#         'USER': tmpPostgres.username,
-#         'PASSWORD': tmpPostgres.password,
-#         'HOST': tmpPostgres.hostname,
-#         'PORT': 5432,
-#         'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
-#     }
-# }
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "payout",
-        "USER": "postgres",
-        "PASSWORD": "postgres",
-        "HOST": "db",
-        "PORT": "5432",
+if DATABASE_URL:
+    tmpPostgres = urlparse(DATABASE_URL)
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': tmpPostgres.path.replace('/', ''),
+            'USER': tmpPostgres.username,
+            'PASSWORD': tmpPostgres.password,
+            'HOST': tmpPostgres.hostname,
+            'PORT': 5432,
+            'OPTIONS': dict(parse_qsl(tmpPostgres.query)),
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": "payout",
+            "USER": "postgres",
+            "PASSWORD": "postgres",
+            "HOST": "db",
+            "PORT": 5432,
+        }
+    }
 
 
 # Celery
 
-# REDIS_HOST = config('REDIS_HOST')
-# REDIS_PORT = config('REDIS_PORT')
-# REDIS_PASSWORD = config('REDIS_PASSWORD')
+REDIS_HOST = config('REDIS_HOST',None)
+REDIS_PORT = config('REDIS_PORT',None)
+REDIS_PASSWORD = config('REDIS_PASSWORD',None)
 
-# CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
-CELERY_BROKER_URL = "redis://redis:6379/0"
+if REDIS_HOST and REDIS_PORT and REDIS_PASSWORD:
+    CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0"
+else:
+    CELERY_BROKER_URL = "redis://redis:6379/0"
+    
 CELERY_RESULT_BACKEND = 'django-db'
 
 CELERY_ACCEPT_CONTENT = ['json']
@@ -165,6 +171,26 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+
+# ── LOGGING ───────────────────────────────────────────────────────────────────
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '[{levelname}] {asctime} {name} {module}.{funcName}:{lineno} — {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {'class': 'logging.StreamHandler', 'formatter': 'verbose'},
+        'db':      {'class': 'logs.handlers.DatabaseHandler'},
+    },
+    'loggers': {
+        'merchants': {'handlers': ['console', 'db'], 'level': 'DEBUG', 'propagate': False},
+        'payouts':   {'handlers': ['console', 'db'], 'level': 'DEBUG', 'propagate': False},
+    },
+}
 
 # ── CORS ──────────────────────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = True   # lock down in prod
